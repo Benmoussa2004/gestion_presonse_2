@@ -277,7 +277,7 @@ class _SessionCard extends StatelessWidget {
           ),
         ),
         content: Text(
-          'La séance du ${s.startAt} sera définitivement supprimée.',
+          'La séance "${s.name}" du ${s.startAt.day}/${s.startAt.month}/${s.startAt.year} sera définitivement supprimée.',
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
@@ -342,7 +342,7 @@ class _SessionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${session.startAt} → ${session.endAt}',
+                        session.name.isNotEmpty ? session.name : 'Séance sans nom',
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onSurface,
@@ -350,7 +350,7 @@ class _SessionCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Séance de cours',
+                        '${session.startAt.day}/${session.startAt.month}/${session.startAt.year} ${session.startAt.hour}:${session.startAt.minute.toString().padLeft(2, '0')} → ${session.endAt.hour}:${session.endAt.minute.toString().padLeft(2, '0')}',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),

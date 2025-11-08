@@ -24,6 +24,7 @@ class _SessionEditorDialog extends ConsumerStatefulWidget {
 class _SessionEditorDialogState extends ConsumerState<_SessionEditorDialog> {
   late DateTime _startAt;
   late DateTime _endAt;
+  final _nameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
   bool _saving = false;
 
@@ -33,11 +34,13 @@ class _SessionEditorDialogState extends ConsumerState<_SessionEditorDialog> {
     final now = DateTime.now();
     _startAt = widget.existing?.startAt ?? now;
     _endAt = widget.existing?.endAt ?? now.add(const Duration(hours: 2));
+    _nameCtrl.text = widget.existing?.name ?? '';
     _codeCtrl.text = widget.existing?.code ?? _randomCode();
   }
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _codeCtrl.dispose();
     super.dispose();
   }
@@ -70,12 +73,19 @@ class _SessionEditorDialogState extends ConsumerState<_SessionEditorDialog> {
   }
 
   Future<void> _save() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Veuillez entrer un nom pour la séance')));
+      return;
+    }
     setState(() => _saving = true);
     try {
       final ctrl = ref.read(sessionsControllerProvider);
       final model = SessionModel(
         id: widget.existing?.id ?? '',
         classId: widget.classId,
+        name: name,
         startAt: _startAt,
         endAt: _endAt,
         code: _codeCtrl.text.trim(),
@@ -109,19 +119,29 @@ class _SessionEditorDialogState extends ConsumerState<_SessionEditorDialog> {
             Text(widget.existing == null ? 'Nouvelle séance' : 'Modifier la séance',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
+            TextField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Nom de la séance (ex: Math, Python, etc.)',
+                hintText: 'Entrez le nom de la séance',
+                prefixIcon: Icon(Icons.label_outline),
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: ListTile(
                     title: const Text('Début'),
-                    subtitle: Text(_startAt.toString()),
+                    subtitle: Text('${_startAt.day}/${_startAt.month}/${_startAt.year} ${_startAt.hour}:${_startAt.minute.toString().padLeft(2, '0')}'),
                     onTap: () => _pickDateTime(start: true),
                   ),
                 ),
                 Expanded(
                   child: ListTile(
                     title: const Text('Fin'),
-                    subtitle: Text(_endAt.toString()),
+                    subtitle: Text('${_endAt.day}/${_endAt.month}/${_endAt.year} ${_endAt.hour}:${_endAt.minute.toString().padLeft(2, '0')}'),
                     onTap: () => _pickDateTime(start: false),
                   ),
                 ),

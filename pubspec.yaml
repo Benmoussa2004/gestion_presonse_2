@@ -25,9 +25,9 @@ dependencies:
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.1.1
 
-  # Fichiers et CSV
+  # Fichiers et Excel
   file_picker: ^8.1.2
-  csv: ^6.0.0
+  excel: ^4.0.4
 
   # Communication HTTP
   http: ^1.2.2

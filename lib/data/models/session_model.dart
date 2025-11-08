@@ -1,6 +1,7 @@
 class SessionModel {
   final String id;
   final String classId;
+  final String name;
   final DateTime startAt;
   final DateTime endAt;
   final String code;
@@ -9,6 +10,7 @@ class SessionModel {
   const SessionModel({
     required this.id,
     required this.classId,
+    required this.name,
     required this.startAt,
     required this.endAt,
     required this.code,
@@ -19,6 +21,7 @@ class SessionModel {
     return SessionModel(
       id: id,
       classId: (data['classId'] ?? '') as String,
+      name: (data['name'] ?? '') as String,
       startAt: DateTime.tryParse(data['startAt']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(
               (data['startAt']?['millisecondsSinceEpoch'] ?? 0) as int,
@@ -35,6 +38,7 @@ class SessionModel {
   Map<String, dynamic> toMap() {
     return {
       'classId': classId,
+      'name': name,
       'startAt': startAt.toIso8601String(),
       'endAt': endAt.toIso8601String(),
       'code': code,

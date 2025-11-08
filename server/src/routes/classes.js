@@ -4,8 +4,13 @@ import ClassModel from '../models/Class.js';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const { teacherId } = req.query;
-  const q = teacherId ? { teacherId } : {};
+  const { teacherId, studentId } = req.query;
+  let q = {};
+  if (teacherId) {
+    q = { teacherId };
+  } else if (studentId) {
+    q = { studentIds: { $in: [studentId] } };
+  }
   const list = await ClassModel.find(q).sort({ createdAt: -1 }).limit(200);
   res.json(list.map(c => ({ id: c._id.toString(), name: c.name, teacherId: c.teacherId, studentIds: c.studentIds, createdAt: c.createdAt })));
 });

@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:convert';
-import 'package:csv/csv.dart';
+import 'package:excel/excel.dart';
 import '../../../core/constants/roles.dart';
 import '../../../data/models/app_user.dart';
 import '../../../data/models/class_model.dart';
 import '../../../mvc/providers.dart';
 
-extension _FirstOrNull<T> on List<T> {
-  T? get firstOrNull => isEmpty ? null : first;
-}
 
 Future<void> showClassEditorDialog(BuildContext context, WidgetRef ref,
     {ClassModel? existing}) async {
@@ -87,13 +83,13 @@ class _ClassEditorDialogState extends ConsumerState<_ClassEditorDialog> {
     }
   }
 
-  Future<void> _importCsv() async {
+  Future<void> _importExcel() async {
     setState(() => _importing = true);
     try {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.custom,
-        allowedExtensions: const ['csv'],
+        allowedExtensions: const ['xlsx', 'xls'],
       );
       if (result == null || result.files.isEmpty) {
         setState(() => _importing = false);
@@ -101,48 +97,79 @@ class _ClassEditorDialogState extends ConsumerState<_ClassEditorDialog> {
       }
 
       final bytes = result.files.first.bytes ?? await result.files.first.xFile.readAsBytes();
-      final content = utf8.decode(bytes);
-      // Try to detect delimiter (comma vs semicolon)
-      final firstLine = content.split('\n').firstOrNull ?? '';
-      final delimiter = (firstLine.contains(';') && !firstLine.contains(',')) ? ';' : ',';
-      final rows = CsvToListConverter(
-        eol: '\n',
-        shouldParseNumbers: false,
-        fieldDelimiter: delimiter,
-      ).convert(content);
-      if (rows.isEmpty) {
+      final excel = Excel.decodeBytes(bytes);
+      
+      if (excel.tables.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('CSV vide')));
+              const SnackBar(content: Text('Fichier Excel vide ou invalide')));
         }
         return;
       }
 
-      // Detect header
-      final header = rows.first.map((e) => e.toString().trim().toLowerCase()).toList();
-      final hasHeader = header.contains('email') || header.contains('studentid') || header.contains('id');
-      final Iterable<List> dataRows = hasHeader ? rows.skip(1) : rows;
+      // Prendre la première feuille
+      final sheet = excel.tables[excel.tables.keys.first]!;
+      if (sheet.rows.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Feuille Excel vide')));
+        }
+        return;
+      }
 
+      // Détecter l'en-tête
+      final headerRow = sheet.rows.first;
+      final header = headerRow.map((cell) {
+        final value = cell?.value;
+        return value?.toString().trim().toLowerCase() ?? '';
+      }).toList();
+      
+      final hasHeader = header.any((h) => 
+        h.contains('email') || h.contains('studentid') || h.contains('id') || h.contains('étudiant'));
+      
+      final dataRows = hasHeader ? sheet.rows.skip(1) : sheet.rows;
+      
       final List<String> emails = [];
+      int emailColumnIndex = -1;
+      
+      // Trouver l'index de la colonne email
+      if (hasHeader) {
+        for (int i = 0; i < header.length; i++) {
+          if (header[i].contains('email')) {
+            emailColumnIndex = i;
+            break;
+          }
+        }
+      }
+
       for (final row in dataRows) {
         if (row.isEmpty) continue;
-        if (header.contains('email')) {
-          final idx = header.indexOf('email');
-          if (idx >= 0 && idx < row.length) {
-            final val = row[idx]?.toString().trim();
-            if (val != null && val.contains('@')) emails.add(val);
-          }
+        
+        String? emailValue;
+        if (emailColumnIndex >= 0 && emailColumnIndex < row.length) {
+          // Colonne email spécifique
+          final cell = row[emailColumnIndex];
+          emailValue = cell?.value?.toString().trim();
         } else {
-          // Single-column list of emails
-          final val = row.first?.toString().trim();
-          if (val != null && val.contains('@')) emails.add(val);
+          // Première colonne qui contient un email
+          for (final cell in row) {
+            final value = cell?.value?.toString().trim();
+            if (value != null && value.contains('@')) {
+              emailValue = value;
+              break;
+            }
+          }
+        }
+        
+        if (emailValue != null && emailValue.contains('@')) {
+          emails.add(emailValue);
         }
       }
 
       if (emails.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Aucun email trouvé dans le CSV')),
+            const SnackBar(content: Text('Aucun email trouvé dans le fichier Excel')),
           );
         }
         return;
@@ -253,14 +280,14 @@ class _ClassEditorDialogState extends ConsumerState<_ClassEditorDialog> {
                                 Align(
                                   alignment: Alignment.centerLeft,
                                   child: OutlinedButton.icon(
-                                    onPressed: _importing ? null : _importCsv,
+                                    onPressed: _importing ? null : _importExcel,
                                     icon: _importing
                                         ? const SizedBox(
                                             width: 16,
                                             height: 16,
                                             child: CircularProgressIndicator(strokeWidth: 2))
                                         : const Icon(Icons.file_upload_outlined),
-                                    label: const Text('Importer CSV'),
+                                    label: const Text('Importer Excel'),
                                   ),
                                 ),
                                 for (final s in students)

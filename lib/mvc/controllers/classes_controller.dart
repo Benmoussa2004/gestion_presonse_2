@@ -8,6 +8,8 @@ class ClassesController {
   Stream<List<ClassModel>> watchAll() => _classes.watchAllClasses();
   Stream<List<ClassModel>> watchForTeacher(String teacherId) =>
       _classes.watchClassesForTeacher(teacherId);
+  Stream<List<ClassModel>> watchForStudent(String studentId) =>
+      _classes.watchClassesForStudent(studentId);
 
   Future<String> create(ClassModel model) => _classes.createClass(model);
   Future<void> update(ClassModel model) => _classes.updateClass(model);

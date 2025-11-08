@@ -52,4 +52,15 @@ class ClassesRepository {
     yield await fetch();
     yield* Stream<int>.periodic(const Duration(seconds: 6), (i) => i).asyncMap((_) => fetch());
   }
+
+  Stream<List<ClassModel>> watchClassesForStudent(String studentId) async* {
+    Future<List<ClassModel>> fetch() async {
+      final res = await ApiClient.get('/classes', query: {'studentId': studentId});
+      if (res.statusCode >= 400) throw StateError('API watchClassesForStudent failed: ${res.statusCode}');
+      final list = (jsonDecode(res.body) as List).cast<Map<String, dynamic>>();
+      return list.map((m) => ClassModel.fromMap((m['id'] ?? m['_id'] ?? '').toString(), m)).toList();
+    }
+    yield await fetch();
+    yield* Stream<int>.periodic(const Duration(seconds: 6), (i) => i).asyncMap((_) => fetch());
+  }
 }

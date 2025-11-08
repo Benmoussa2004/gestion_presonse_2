@@ -11,6 +11,7 @@ import '../features/attendance/presentation/attendance_screen.dart';
 import '../features/attendance/presentation/scanner_screen.dart';
 import '../features/stats/presentation/stats_screen.dart';
 import '../features/users/presentation/users_screen.dart';
+import '../features/students/presentation/schedule_screen.dart';
 
 class AppRoutes {
   static const root = '/';
@@ -24,6 +25,7 @@ class AppRoutes {
   static const scanner = '/scanner';
   static const stats = '/stats';
   static const users = '/users';
+  static const studentSchedule = '/student/schedule';
 }
 
 class AppRouter {
@@ -70,6 +72,10 @@ class AppRouter {
           path: AppRoutes.users,
           builder: (context, state) => const UsersScreen(),
         ),
+        GoRoute(
+          path: AppRoutes.studentSchedule,
+          builder: (context, state) => const StudentScheduleScreen(),
+        ),
       ],
       errorBuilder: (context, state) => Scaffold(
         appBar: AppBar(title: const Text('Not found')),
@@ -92,7 +98,7 @@ class AppRouter {
         case 'teacher':
           return AppRoutes.classes;
         case 'student':
-          return AppRoutes.attendance;
+          return AppRoutes.studentSchedule;
       }
     }
     return AppRoutes.root;

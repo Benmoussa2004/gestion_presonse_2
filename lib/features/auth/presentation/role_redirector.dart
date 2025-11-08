@@ -50,7 +50,7 @@ class RoleRedirectorScreen extends ConsumerWidget {
       });
     } else if (role == UserRoles.student) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.go(AppRoutes.attendance);
+        if (context.mounted) context.go(AppRoutes.studentSchedule);
       });
     }
 
